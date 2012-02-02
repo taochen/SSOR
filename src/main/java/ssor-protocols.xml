@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration of micro-protocol stack, adding or removing corresponding protocol implementations here  -->
+<protocol-stack>
+    <protocol class="org.ssor.protocol.election.REP"/>
+    <protocol class="org.ssor.protocol.tolerance.FT"/>
+    <protocol class="org.ssor.protocol.replication.AR"/>
+    <protocol class="org.ssor.protocol.replication.abcast.MSP"/>  
+</protocol-stack>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<magic-number-class-mapping>
+    <class id="1" name="org.ssor.protocol.Message"/>
+    <class id="2" name="org.ssor.protocol.replication.RequestHeader"/>
+    <class id="3" name="org.ssor.protocol.replication.BatchRequestHeader"/>
+    <class id="4" name="org.ssor.protocol.replication.ResponseHeader"/>  
+    <class id="5" name="org.ssor.protocol.election.DecisionHeader"/>
+    <class id="6" name="org.ssor.protocol.election.InterestHeader"/>
+    <class id="7" name="org.ssor.protocol.election.AgreementHeader"/>
+    <class id="8" name="org.ssor.protocol.tolerance.ConsensusHeader"/>
+    <class id="9" name="org.ssor.protocol.tolerance.AgreementHeader"/>
+    <class id="10" name="org.ssor.test.traditional.TestHeader"/>
+</magic-number-class-mapping>

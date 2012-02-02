@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.example.org/ssor"
+	xmlns="http://www.example.org/ssor" elementFormDefault="qualified">
+
+	<xsd:element name="SSOR">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="group">
+
+					<xsd:complexType>
+
+						<xsd:sequence>
+							<xsd:element name="redundantService"
+								maxOccurs="unbounded" minOccurs="0">
+								<xsd:complexType>
+									<xsd:sequence>
+										<xsd:element minOccurs="0"
+											name="arguments">
+											<xsd:complexType>
+												<xsd:sequence>
+													<xsd:element
+														name="element" maxOccurs="unbounded">
+														<xsd:complexType>
+															<xsd:sequence />
+															<xsd:attribute
+																name="type" type="xsd:string" use="required" />
+														</xsd:complexType>
+													</xsd:element>
+												</xsd:sequence>
+											</xsd:complexType>
+										</xsd:element>
+									</xsd:sequence>
+									<xsd:attributeGroup
+										ref="serviceAttributes" />
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="atomicService"
+								maxOccurs="unbounded" minOccurs="0">
+								<xsd:complexType>
+									<xsd:sequence>
+										<xsd:element minOccurs="0"
+											name="arguments">
+											<xsd:complexType>
+												<xsd:sequence>
+													<xsd:element
+														name="element" maxOccurs="unbounded">
+														<xsd:complexType>
+															<xsd:sequence />
+															<xsd:attribute
+																name="type" type="xsd:string" use="required" />
+														</xsd:complexType>
+													</xsd:element>
+												</xsd:sequence>
+											</xsd:complexType>
+										</xsd:element>
+										<xsd:element
+											maxOccurs="unbounded" minOccurs="0" name="service">
+											<xsd:complexType>
+												<xsd:sequence />
+												<xsd:attribute
+													name="name" type="xsd:string" use="required" />
+											</xsd:complexType>
+										</xsd:element>
+
+										<xsd:element minOccurs="0"
+											maxOccurs="unbounded" name="concurrentDeliverableServices">
+											<xsd:complexType>
+												<xsd:sequence>
+													<xsd:element
+														name="service" maxOccurs="unbounded">
+														<xsd:complexType>
+															<xsd:sequence />
+															<xsd:attribute
+																name="name" type="xsd:string" use="required" />
+														</xsd:complexType>
+													</xsd:element>
+												</xsd:sequence>
+											</xsd:complexType>
+										</xsd:element>
+
+
+
+									</xsd:sequence>
+
+									<xsd:attributeGroup
+										ref="serviceAttributes" />
+
+									<xsd:attribute name="isFIFO"
+										type="xsd:boolean" use="required" />
+
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="compositeService"
+								maxOccurs="unbounded" minOccurs="0">
+								<xsd:complexType>
+									<xsd:sequence>
+										<xsd:element minOccurs="0"
+											name="arguments">
+											<xsd:complexType>
+												<xsd:sequence>
+													<xsd:element
+														name="element" maxOccurs="unbounded">
+														<xsd:complexType>
+															<xsd:sequence />
+															<xsd:attribute
+																name="type" type="xsd:string" use="required" />
+														</xsd:complexType>
+													</xsd:element>
+												</xsd:sequence>
+											</xsd:complexType>
+										</xsd:element>
+										<xsd:element name="service"
+											maxOccurs="unbounded">
+											<xsd:complexType>
+												<xsd:sequence />
+												<xsd:attribute
+													name="name" type="xsd:string" use="required" />
+											</xsd:complexType>
+										</xsd:element>
+									</xsd:sequence>
+									<xsd:attributeGroup
+										ref="serviceAttributes" />
+
+								</xsd:complexType>
+							</xsd:element>
+							<xsd:element name="region"
+								maxOccurs="unbounded">
+								<xsd:complexType>
+									<xsd:sequence>
+										<xsd:element name="service"
+											maxOccurs="unbounded">
+											<xsd:complexType>
+												<xsd:sequence />
+												<xsd:attribute
+													name="name" type="xsd:string" use="required" />
+											</xsd:complexType>
+										</xsd:element>
+									</xsd:sequence>
+									<xsd:attribute name="id"
+										type="xsd:integer" use="required" />
+									<xsd:attribute name="scope"
+										type="scopeType" use="required" />
+								</xsd:complexType>
+
+							</xsd:element>
+
+						</xsd:sequence>
+						<xsd:attribute name="name" type="xsd:string"
+							use="required" />
+						<xsd:attribute name="interests"
+							type="xsd:string" use="optional" />
+					</xsd:complexType>
+
+				</xsd:element>
+			</xsd:sequence>
+
+		</xsd:complexType>
+
+	</xsd:element>
+
+	<xsd:attributeGroup name="serviceAttributes">
+
+		<xsd:attribute name="name" type="xsd:string" use="required" />
+		<xsd:attribute name="class" type="xsd:string" use="required" />
+		<xsd:attribute name="interface" type="xsd:string"
+			use="required" />
+	<xsd:attribute name="alias" type="xsd:string"
+			use="optional" />
+	</xsd:attributeGroup>
+
+
+	<xsd:simpleType name="scopeType">
+
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="conflict-region" />
+			<xsd:enumeration value="sessional-conflict-region" />
+			<xsd:enumeration value="non-conflict-region" />
+		</xsd:restriction>
+
+	</xsd:simpleType>
+
+
+</xsd:schema>
