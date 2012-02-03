@@ -81,4 +81,36 @@ public abstract class AbstractProtocol implements Protocol{
 	public void setUUID_ADDR(int UUID_ADDR){
 		this.UUID_ADDR = UUID_ADDR;
 	}
+	
+	/**
+	 * Use within new protocols if one does not sure what should be
+	 * pass out after the new protocols. It basically replace the dataForNextProtocol
+	 * attribute with a new token which can be used within next new
+	 * protocol (the dataForNextProtocol attribute of the new token would still be the
+	 * original dataForNextProtocol instance for the whole protocol stack).
+	 * 
+	 * @param original the original token from previous layer
+	 * @param data the new data
+	 * @param nextAction the new action
+	 */
+	protected void formNewToken (Token original, Object data, int nextAction) {
+		Object originalData = original.getDataForNextProtocol();
+		Token t = new Token (nextAction, originalData);
+		t.setDataForNextProtocol(data);
+		original.setDataForNextProtocol(t);
+	}
+	
+	/**
+	 * Use within new protocols if one does not sure what should be
+	 * pass out after the new protocols. Everything should be the same
+	 * if the original token is from via formNewToken function.
+	 * 
+	 * @param original
+	 */
+	protected void reformToken (Token original) {
+		if(!(original.getDataForNextProtocol() instanceof Token)) return;
+		
+		Token t = (Token)original.getDataForNextProtocol();
+		original.setDataForNextProtocol(t.getData());
+	}
 }
