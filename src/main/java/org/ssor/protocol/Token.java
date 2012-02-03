@@ -4,6 +4,9 @@ package org.ssor.protocol;
  * The data that passing through the protocol stack, the previous protocol has
  * the right to modify action of the next protocol.
  * 
+ * Please when develop new protocol, make sure the attributes in Token object is still
+ * consistent when IN and OUT of the new protocols.
+ * 
  * @author Tao Chen
  * 
  */
@@ -42,8 +45,10 @@ public class Token implements Cloneable{
 	public static final int FT_AGREEMENT_RETRANSMISSION= 17;
 	// This normally represent a decision from the previous protocol
 	private int nextAction = NO_CHANGE;
-
+    // This is intended to be used across the all protocol stack
 	private Object data;
+	// This would only be used when the token change protocol command
+	// This is only intended to be used by NEXT layer of protocol only
 	private Object dataForNextProtocol;
 
 	public Token(Object data) {

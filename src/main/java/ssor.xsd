@@ -85,7 +85,9 @@
 
 									<xsd:attributeGroup
 										ref="serviceAttributes" />
-
+                                     <!-- This mainly for support of some GCM, such as JGroup, which support FIFO when
+                                     using pbcast.NAKACK protocol. Therefore it allows further concurrency by puting different
+                                     message into different scope, so the FIFO consistency can be traded for better scalablility -->
 									<xsd:attribute name="isFIFO"
 										type="xsd:boolean" use="required" />
 
