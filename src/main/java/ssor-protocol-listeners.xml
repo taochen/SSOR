@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configuration of listeners that can be used by any implemented protocols, adding or removing corresponding listener implementations here  -->
+<listeners-stack>
+    <listener class="org.ssor.listener.CommunicationListener"/>
+    <listener class="org.ssor.listener.InvocationAware"/>
+    <listener class="org.ssor.listener.RequirementsAware"/>
+    <listener class="org.ssor.protocol.ProtocolSharableInstances"/>  
+</listeners-stack>

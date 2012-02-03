@@ -35,6 +35,7 @@ public class ClassConfigurator {
 	
 	public static final String MAGIC_NUMBER_FILE = "ssor-streaming.xml";
 	public static final String PROTOCOL_FILE = "ssor-protocols.xml";
+	public static final String PROTOCOL_LISTENER_FILE = "ssor-protocol-listeners.xml";
 	private static final Map<Class<?>,Short> streamableClassMap= CollectionFacade.getConcurrentHashMap(); // key=Class, value=magic number
     private static final Map<Short,Class<?>> streamableMagicMap= CollectionFacade.getConcurrentHashMap(); // key=magic number, value=Class
 
@@ -45,7 +46,13 @@ public class ClassConfigurator {
     private static final Map<Short,Class<?>> primitiveMagicMap= CollectionFacade.getConcurrentHashMap(); // key=magic number, value=Class
 
     
+    private static final String classRoot = "class";
+    private static final String protocolRoot = "protocol";
+    private static final String listenerRoot = "listener";
+    
     private static String[] protocolClasses;
+    private static String[] protocolListenerClasses;
+    
     static {
         try {
             init();
@@ -65,10 +72,21 @@ public class ClassConfigurator {
 		                              .getCodeSource().getLocation().getFile();
     	if(prefix.endsWith("ClassConfigurator.class"))
     		prefix = prefix.replace("org/ssor/conf/ClassConfigurator.class", "");
-        List<Tuple<Short,String>> mapping= (List<Tuple<Short,String>>)read(prefix + MAGIC_NUMBER_FILE, true);
+    	
+    	// Reading magic number for streaming
+        final List<Tuple<Short,String>> mapping= new LinkedList<Tuple<Short,String>> ();
+        read(prefix + MAGIC_NUMBER_FILE, classRoot, mapping);
         
-        List<String> list = null;
-        protocolClasses = (list = (List<String>)read(prefix + PROTOCOL_FILE, false)).toArray(new String[list.size()]);
+        // Reading protocols config
+        List<String> list =  new LinkedList<String> ();
+        read(prefix + PROTOCOL_FILE, protocolRoot, list);
+        protocolClasses = list.toArray(new String[list.size()]);
+        	
+        // Reading protocols listener config
+        list =  new LinkedList<String> ();
+        read(prefix + PROTOCOL_LISTENER_FILE, listenerRoot, list);
+        protocolListenerClasses = list.toArray(new String[list.size()]);
+        
         
         short m = -1;
         for(Tuple<Short,String> tuple: mapping) {
@@ -167,7 +185,7 @@ public class ClassConfigurator {
      *
      * @return an array of ClassMap objects that where parsed from the file (if found) or an empty array if file not found or had en exception
      */
-    protected static Object read(String name, boolean isMapping) throws Exception {
+    protected static List<?> read(String name, String rootName, List list) throws Exception {
         InputStream stream;
         try {
             stream=Util.getResourceAsStream(name, ClassConfigurator.class);
@@ -181,19 +199,19 @@ public class ClassConfigurator {
         catch(Exception x) {
             throw new ConfigurationException(name + " not found. Please make sure it is on the classpath", x);
         }
-        return isMapping ? parseMapping(stream) : parseProtocol(stream);
+        return parse(stream, rootName, list);
     }
 
-    protected static List<Tuple<Short,String>> parseMapping(InputStream stream) throws Exception {
+    protected static List<?> parse(InputStream stream, String rootName, List list) throws Exception {
         DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
         factory.setValidating(false); // for now
         DocumentBuilder builder=factory.newDocumentBuilder();
         Document document=builder.parse(stream);
-        NodeList class_list=document.getElementsByTagName("class");
-        List<Tuple<Short,String>> list=new LinkedList<Tuple<Short,String>>();
+        NodeList class_list=document.getElementsByTagName(rootName);
+    
         for(int i=0; i < class_list.getLength(); i++) {
             if(class_list.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                list.add(parseClassData(class_list.item(i)));
+                list.add((classRoot.equals(rootName))? parseClassData(class_list.item(i)) : parseData(class_list.item(i)));
             }
         }
         return list;
@@ -216,24 +234,8 @@ public class ClassConfigurator {
             throw tmp;
         }
     }
-    
 
-    protected static List<String> parseProtocol(InputStream stream) throws Exception {
-        DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
-        factory.setValidating(false); // for now
-        DocumentBuilder builder=factory.newDocumentBuilder();
-        Document document=builder.parse(stream);
-        NodeList class_list=document.getElementsByTagName("protocol");
-        List<String> list=new LinkedList<String>();
-        for(int i=0; i < class_list.getLength(); i++) {
-            if(class_list.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                list.add(parseProtocolData(class_list.item(i)));
-            }
-        }
-        return list;
-    }
-
-    protected static String parseProtocolData(Node protocol) throws IOException {
+    protected static String parseData(Node protocol) throws IOException {
         try {
             protocol.normalize();
             NamedNodeMap attrs=protocol.getAttributes();
@@ -255,7 +257,8 @@ public class ClassConfigurator {
 		return protocolClasses;
 	}
 
-
-    
-    
+	public static String[] getProtocolListenerClasses() {
+		return protocolListenerClasses;
+	}
+ 
 }

@@ -1,14 +1,12 @@
 package org.ssor.protocol;
 
-import java.util.Map;
 
-import org.ssor.CollectionFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.ssor.annotation.ProtocolListenerHelper;
+import org.ssor.conf.ClassConfigurator;
 import org.ssor.exception.ConfigurationException;
-import org.ssor.invocation.InvocationAdaptor;
-import org.ssor.invocation.NativeInvocationHandler;
-import org.ssor.listener.CommunicationListener;
-import org.ssor.listener.InvocationAware;
-import org.ssor.listener.RequirementsAware;
+import org.ssor.listener.helper.ProtocolHelper;
 import org.ssor.util.Group;
 import org.ssor.util.Util;
 
@@ -17,6 +15,9 @@ public class ProtocolStack {
 	private Protocol[] protocols;
 
 	private int length;
+	
+	private final Logger logger = LoggerFactory
+	.getLogger(ProtocolStack.class);
 
 	public ProtocolStack(String[] classes) {
 		try {
@@ -63,34 +64,44 @@ public class ProtocolStack {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void init(Group group) {
 		
-		@SuppressWarnings("unchecked")
-		final Map<String, Message> sentMessages = CollectionFacade.getConcurrentHashMap();
-		final InvocationAdaptor invocationAdaptor = new NativeInvocationHandler(group, group, group.getProxyFactory());
-		for (Protocol protocol : protocols){
+		final String[] listeners = ClassConfigurator.getProtocolListenerClasses();
+		Class<?> clazz = null;
+		ProtocolHelper helper = null;
+		Object params = null;
+		try {
+			for (String className : listeners) {
 			
-			if(protocol instanceof RequirementsAware)
-				((RequirementsAware)protocol).setRequirementsAwareAdaptor(group);
-			if(protocol instanceof CommunicationListener)
-				((CommunicationListener)protocol).setCommunicationAdaptor(group);
-			if(protocol instanceof InvocationAware) {
-				((InvocationAware)protocol).setInvocationAdaptor(invocationAdaptor);
-				((InvocationAware)protocol).setCallback(group.getCallback());
-			} 
-			if(protocol instanceof ProtocolSharableInstances){
-				((ProtocolSharableInstances)protocol).setCachedSentMessages(sentMessages);
+					clazz = Util.loadClass(className, ProtocolStack.class);
+				    if (logger.isDebugEnabled()) {
+				    	logger.debug("Loading for listener: "  + clazz);
+				    }
+					helper = (ProtocolHelper)((ProtocolListenerHelper)clazz.getAnnotation(ProtocolListenerHelper.class)).helperClass().newInstance();
+				    params = helper.createParameters(group);
+					for (Protocol protocol : protocols){
+						if (clazz.isInstance(protocol)) {
+						    helper.assignParameters(protocol, group, params);					
+						}
+					}			    
 			}
-			
+		} catch (ClassNotFoundException e) {
+			logger.error("Loading class failed", e);			
+		} catch (InstantiationException e) {
+			logger.error("Binding listener failed", e);;
+		} catch (IllegalAccessException e) {
+			logger.error("Binding listener failed", e);
+		}
+		
+		for (Protocol protocol : protocols){
 			protocol.setUUID_ADDR(group.getUUID_ADDR());
 			protocol.init();
 			protocol.setStack(this);
 			protocol.setUtil(group.getUtil());
 		}
 	}
-
-
-
+	
 	public void finishConsensus() {
 		for (Protocol protocol : protocols){
 			protocol.finishConsensus();
