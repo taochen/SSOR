@@ -40,7 +40,7 @@ public abstract class GenericInvocation implements InvocationAdaptor {
 
 	public GenericInvocation(ManagerBus bus, RequirementsAwareAdaptor awareness) {
 		serviceManager = awareness.getServiceManager();
-		replicationManager = bus.getReplicationManager();
+		replicationManager = (ReplicationManager) bus.getManager(org.ssor.protocol.replication.AR.class);
 	}
 
 	protected Object preService(AtomicService service, Object[] arguments) {

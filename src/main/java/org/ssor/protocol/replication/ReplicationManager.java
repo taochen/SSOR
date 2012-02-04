@@ -13,7 +13,6 @@ import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
 import org.ssor.protocol.replication.abcast.DeliveryPacket;
 import org.ssor.util.Callback;
-import org.ssor.util.Group;
 
 public class ReplicationManager extends AbstractProtocolManager {
 
@@ -55,11 +54,7 @@ public class ReplicationManager extends AbstractProtocolManager {
 		
 		return false;
 	}
-	
-	public ReplicationManager(Group group){
-		this.group = group;
-		protocolStack = group.getProtocolStack();
-	}
+
 	/**
 	 * Run the protocol that analysis the invoked service, and this would trigger the protocol chain
 	 * @param unit

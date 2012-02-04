@@ -10,9 +10,15 @@ import org.ssor.util.Group;
 public abstract class AbstractProtocolManager implements ProtocolManager{
 
 	protected Group group;
+	protected ProtocolStack protocolStack;
 
 	private static ThreadLocal<Boolean> local = new ThreadLocal<Boolean>();
 
+	public void initializeProtoclManager (Group group) {
+		this.group = group;
+		protocolStack = group.getProtocolStack();
+	}
+	
 	protected boolean suspendProcess(Message message, Logger logger,
 			final Callback callback) {
 

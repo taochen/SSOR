@@ -2,6 +2,7 @@ package org.ssor.protocol.replication;
 
 import org.ssor.AtomicService;
 import org.ssor.CompositeService;
+import org.ssor.annotation.ProtocolManager;
 import org.ssor.protocol.Command;
 import org.ssor.protocol.Message;
 import org.ssor.protocol.Token;
@@ -10,6 +11,7 @@ import org.ssor.protocol.replication.abcast.MSP;
 import org.ssor.util.Environment;
 import org.ssor.util.Tuple;
 
+@ProtocolManager(managerClass=org.ssor.protocol.replication.ReplicationManager.class)
 public class AR extends Replication {
 
 	@Override

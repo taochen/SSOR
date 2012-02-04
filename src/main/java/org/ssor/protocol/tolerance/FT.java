@@ -17,6 +17,7 @@ import org.ssor.Sequence;
 import org.ssor.AtomicService;
 import org.ssor.SessionRegion;
 import org.ssor.CompositeService;
+import org.ssor.annotation.ProtocolManager;
 import org.ssor.gcm.CommunicationAdaptor;
 import org.ssor.listener.CommunicationListener;
 import org.ssor.protocol.Command;
@@ -34,6 +35,7 @@ import org.ssor.util.Triple;
 import org.ssor.util.Tuple;
 import org.ssor.util.Util;
 
+@ProtocolManager(managerClass=org.ssor.protocol.tolerance.FTManager.class)
 public class FT extends RequirementsAwareProtocol implements
 		CommunicationListener, ProtocolSharableInstances {
 

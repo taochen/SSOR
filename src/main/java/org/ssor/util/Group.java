@@ -1,5 +1,7 @@
 package org.ssor.util;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,10 +21,9 @@ import org.ssor.gcm.GCMAdaptor;
 import org.ssor.invocation.InvocationCallback;
 import org.ssor.invocation.ProxyFactory;
 import org.ssor.protocol.Message;
+import org.ssor.protocol.Protocol;
+import org.ssor.protocol.ProtocolManager;
 import org.ssor.protocol.ProtocolStack;
-import org.ssor.protocol.election.ElectionManager;
-import org.ssor.protocol.replication.ReplicationManager;
-import org.ssor.protocol.tolerance.FTManager;
 
 /**
  * 
@@ -53,12 +54,13 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 	private RegionDistributionManager regionDistributionManager;
 
 	private String name;
-
+/*
 	private ElectionManager electionManager;
 
 	private ReplicationManager replicationManager;
 
-	private FTManager faultyManager;
+	private FTManager faultyManager;*/
+	private Map<Class<?>, ProtocolManager> protocolManagers;
 
 	private RegionDistributionSynchronyManager regionDistributionSynchronyManager;
 
@@ -96,9 +98,32 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 				this);
 		protocolStack = new ProtocolStack(ClassConfigurator
 				.getProtocolClasses());
-		replicationManager = new ReplicationManager(this);
-		electionManager = new ElectionManager(this);
-		faultyManager = new FTManager(this);
+		protocolManagers = CollectionFacade.getConcurrentHashMap();
+		
+		ProtocolManager manager = null;
+		try {
+			for (Protocol protocol : protocolStack.getProtocols()) {
+				
+				// The protocol may not need a corresponding protocl manager
+				if (protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolManager.class) == null){
+					if (logger.isDebugEnabled()) {
+						logger.debug("Protocol " + protocol.getClass() + " does not have a dedicated manager");
+					}
+					continue;
+				}
+				
+				manager = (ProtocolManager) protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolManager.class).managerClass().newInstance();
+				manager.initializeProtoclManager(this);
+				protocolManagers.put(protocol.getClass(), manager);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Aassociating protocol " + protocol.getClass() + " with protocol manager " + manager.getClass());
+				}
+			}
+		} catch (InstantiationException e) {
+			logger.error("Binding protocol and its manager failed", e);;
+		} catch (IllegalAccessException e) {
+			logger.error("Binding protocol and its manager failed", e);
+		}
 		states = CollectionFacade.getConcurrentHashMap();
 		sessionalStates = CollectionFacade.getConcurrentHashMap();
 
@@ -189,18 +214,24 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 		return name;
 	}
 
-	public ElectionManager getElectionManager() {
-		return electionManager;
+	public ProtocolManager getManager (Class<?> clazz){
+		return protocolManagers.get(clazz);
 	}
 
-	public ReplicationManager getReplicationManager() {
-		return replicationManager;
+	/**
+	 * Return a read-only set of protocol managers, this is not thread-safe
+	 * @return the set of protocol managers
+	 */
+	public Set<ProtocolManager> getManagers () {
+		Iterator<Map.Entry<Class<?>, ProtocolManager>> itr = protocolManagers.entrySet().iterator();		
+		Set<ProtocolManager> set = new HashSet<ProtocolManager>();
+		while (itr.hasNext()) {
+			set.add(itr.next().getValue());
+		}
+		
+		return set;
 	}
-
-	public FTManager getFaultyManager() {
-		return faultyManager;
-	}
-
+	
 	public String toString() {
 		return "(Group: " + name + ")";
 	}

@@ -15,6 +15,7 @@ import org.ssor.RegionDistributionManager;
 import org.ssor.RegionDistributionSynchronyManager;
 import org.ssor.invocation.InvocationCallback;
 import org.ssor.protocol.Message;
+import org.ssor.protocol.ProtocolManager;
 import org.ssor.protocol.election.ElectionManager;
 import org.ssor.protocol.replication.ReplicationManager;
 import org.ssor.protocol.replication.RequestHeader;
@@ -45,7 +46,6 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	protected Group group;
 
 	protected String path;
-
 	
 	protected Util util;
 	// If false then use default tcp configuration
@@ -53,14 +53,13 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	
 	protected RegionDistributionSynchronyManager regionDistributionSynchronyManager;
 	
-
-	
+	protected Set<ProtocolManager> protocolManager;
 
 	public GenericGCMAdaptor(String groupName) {
 		this.group = new Group(groupName, this);
-		replicationManager = group.getReplicationManager();
-		faultyManager = group.getFaultyManager();
-		electionManager = group.getElectionManager();
+		protocolManager = group.getManagers();
+		faultyManager = (FTManager) group.getManager(org.ssor.protocol.tolerance.FT.class);
+		electionManager = (ElectionManager) group.getManager(org.ssor.protocol.election.REP.class);
 		regionDistributionManager = group.getRegionDistributionManager();
 		regionDistributionSynchronyManager = group.getRegionDistributionSynchronyManager();
 	}
@@ -73,6 +72,17 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 		message.setSrc(address);
 		//System.out.print(address.hashCode() + " : " + Environment.UUID_ADDR + "************\n");
 		try {
+			
+			for (ProtocolManager manager : protocolManager) {
+				// A certain header can be handled by one manager only
+				// if multiple protocol needs to involved in the same header
+				// then it would be better to consider within the protocol (with the right command)
+				// rather than the protocol manager.
+				if (manager.handleReceive(message, address, addressUUID)) {
+					return;
+				}
+			}
+			/*
 			if(replicationManager.handleReceive(message, address, addressUUID)) return;
 			else if(electionManager.handleReceive(message, address, addressUUID)) return;
 			else if(faultyManager.handleReceive(message, address, addressUUID)) return;
@@ -140,7 +150,7 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 				
 			}*/
 		} catch (Throwable t) {
-			t.printStackTrace();
+			logger.error("Handle receive message failed", t);
 		}
 	}
 

@@ -10,7 +10,6 @@ import org.ssor.protocol.Header;
 import org.ssor.protocol.Message;
 import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
-import org.ssor.util.Group;
 
 public class ElectionManager extends AbstractProtocolManager {
 
@@ -18,11 +17,6 @@ public class ElectionManager extends AbstractProtocolManager {
 			.getLogger(ElectionManager.class);
 
 	private ProtocolStack protocolStack;
-
-	public ElectionManager(Group group) {
-		this.group = group;
-		protocolStack = group.getProtocolStack();
-	}
 	
 	public boolean handleReceive(Message message, Object address, int addressUUID){
 		Header header = message.getHeader();

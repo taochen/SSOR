@@ -12,7 +12,6 @@ import org.ssor.protocol.Header;
 import org.ssor.protocol.Message;
 import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
-import org.ssor.util.Group;
 import org.ssor.util.Triple;
 import org.ssor.util.Tuple;
 
@@ -22,11 +21,7 @@ public class FTManager extends AbstractProtocolManager {
 	.getLogger(FTManager.class);
 	
 	private ProtocolStack protocolStack;
-	
-	public FTManager(Group group) {
-		this.group = group;
-		protocolStack = group.getProtocolStack();
-	}
+
 	
 	public boolean handleReceive(Message message, Object address, int addressUUID){
 		Header header = message.getHeader();

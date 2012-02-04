@@ -80,15 +80,17 @@ public class ProtocolStack {
 				    }
 				    
 				    if ((ProtocolListenerHelper)clazz.getAnnotation(ProtocolListenerHelper.class) == null) {
-				    	ConfigurationException ce = new ConfigurationException("Class " + clazz + " has no binding helper");
-				    	throw ce;
+				    	throw new ConfigurationException("Class " + clazz + " has no binding helper");
 				    }
 				    
-					helper = (ProtocolHelper)((ProtocolListenerHelper)clazz.getAnnotation(ProtocolListenerHelper.class)).helperClass().newInstance();
+					helper = (ProtocolHelper)clazz.getAnnotation(ProtocolListenerHelper.class).helperClass().newInstance();
 				    params = helper.createParameters(group);
 					for (Protocol protocol : protocols){
 						if (clazz.isInstance(protocol)) {
-						    helper.assignParameters(protocol, group, params);					
+						    helper.assignParameters(protocol, group, params);
+						    if (logger.isDebugEnabled()) {
+						    	logger.debug("Protocl "  + protocol.getClass() + " is listening to listener " + clazz +" with helper " + helper.getClass());
+						    }
 						}
 					}			    
 			}
@@ -114,6 +116,8 @@ public class ProtocolStack {
 		}
 	}
 
-	
+	public Protocol[] getProtocols() {
+		return protocols;
+	}
 
 }
