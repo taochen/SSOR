@@ -78,6 +78,12 @@ public class ProtocolStack {
 				    if (logger.isDebugEnabled()) {
 				    	logger.debug("Loading for listener: "  + clazz);
 				    }
+				    
+				    if ((ProtocolListenerHelper)clazz.getAnnotation(ProtocolListenerHelper.class) == null) {
+				    	ConfigurationException ce = new ConfigurationException("Class " + clazz + " has no binding helper");
+				    	throw ce;
+				    }
+				    
 					helper = (ProtocolHelper)((ProtocolListenerHelper)clazz.getAnnotation(ProtocolListenerHelper.class)).helperClass().newInstance();
 				    params = helper.createParameters(group);
 					for (Protocol protocol : protocols){
