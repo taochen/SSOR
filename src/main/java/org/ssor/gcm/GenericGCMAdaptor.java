@@ -76,10 +76,29 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 			// then it would be better to consider within the protocol (with the right command)
 			// rather than the protocol manager.
 			// 
-			// This ensure a header would never be handled by two different protocol incorrectly			
+			// This ensure a header would never be handled by two different protocol incorrectly	
+			
+			// Check if this is a sub-class, such as BatchRequestHeader on AR
+			if (!headersToManagers.containsKey(message.getHeader().getClass())) {
+				final Set<Class<?>> headers = headersToManagers.keySet();
+				for (Class<?> header : headers) {
+					if (header.isInstance(message.getHeader())) {
+						headersToManagers.get(header).handleReceive(message, address, addressUUID);
+						if (logger.isDebugEnabled()) {
+							logger.debug("Header " + message.getHeader().getClass() + " is sub-class of header " + header);
+							logger.debug("Header " + message.getHeader().getClass() + " going into manager " + headersToManagers.get(message.getHeader().getClass()));
+						}
+						return;
+					}
+				}
+			}
+			
+			// Do the normal process
 			headersToManagers.get(message.getHeader().getClass()).handleReceive(message, address, addressUUID);
 				
-			
+			if (logger.isDebugEnabled()) {
+				logger.debug("Header " + message.getHeader().getClass() + " going into manager " + headersToManagers.get(message.getHeader().getClass()));
+			}
 			/*
 			if(replicationManager.handleReceive(message, address, addressUUID)) return;
 			else if(electionManager.handleReceive(message, address, addressUUID)) return;
