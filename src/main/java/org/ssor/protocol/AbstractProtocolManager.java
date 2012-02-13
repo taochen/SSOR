@@ -56,8 +56,8 @@ public abstract class AbstractProtocolManager implements ProtocolManager{
 						// This would be notify when consensus finish
 						group.getCONSENSUS_LOCK().wait();
 					} catch (InterruptedException e) {
-
-						e.printStackTrace();
+						logger
+						    .error("Waitting on group consensus failed");
 					}
 				}
 
@@ -91,12 +91,15 @@ public abstract class AbstractProtocolManager implements ProtocolManager{
 
 				Sequence[] sequences = (Sequence[]) responseHeader
 						.getTimestamp();
-				for (Sequence sequence : sequences)
+				for (Sequence sequence : sequences) {
 					group.setState(header.getService(), header
 							.getSessionId(), sequence);
-			} else
+				}
+				
+			} else {
 				group.setState(header.getService(), header.getSessionId(),
 						(Sequence) responseHeader.getTimestamp());
+			}
 		}
 	}
 }

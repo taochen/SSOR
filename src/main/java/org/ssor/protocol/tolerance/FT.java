@@ -17,7 +17,7 @@ import org.ssor.Sequence;
 import org.ssor.AtomicService;
 import org.ssor.SessionRegion;
 import org.ssor.CompositeService;
-import org.ssor.annotation.ProtocolManager;
+import org.ssor.annotation.ProtocolBinder;
 import org.ssor.gcm.CommunicationAdaptor;
 import org.ssor.listener.CommunicationListener;
 import org.ssor.protocol.Command;
@@ -35,7 +35,8 @@ import org.ssor.util.Triple;
 import org.ssor.util.Tuple;
 import org.ssor.util.Util;
 
-@ProtocolManager(managerClass=org.ssor.protocol.tolerance.FTManager.class)
+@ProtocolBinder(managerClass=org.ssor.protocol.tolerance.FTManager.class, 
+		headers = {org.ssor.protocol.tolerance.AgreementHeader.class, org.ssor.protocol.tolerance.ConsensusHeader.class})
 public class FT extends RequirementsAwareProtocol implements
 		CommunicationListener, ProtocolSharableInstances {
 

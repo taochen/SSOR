@@ -16,6 +16,7 @@ import org.ssor.RegionDistributionManager;
 import org.ssor.RegionDistributionSynchronyManager;
 import org.ssor.State;
 import org.ssor.conf.ClassConfigurator;
+import org.ssor.exception.ConfigurationException;
 import org.ssor.gcm.CommunicationAdaptor;
 import org.ssor.gcm.GCMAdaptor;
 import org.ssor.invocation.InvocationCallback;
@@ -54,13 +55,10 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 	private RegionDistributionManager regionDistributionManager;
 
 	private String name;
-/*
-	private ElectionManager electionManager;
 
-	private ReplicationManager replicationManager;
-
-	private FTManager faultyManager;*/
-	private Map<Class<?>, ProtocolManager> protocolManagers;
+	private Map<Class<?>, ProtocolManager> protocolsToManagers;
+	
+	private Map<Class<?>, ProtocolManager> headersToManagers;
 
 	private RegionDistributionSynchronyManager regionDistributionSynchronyManager;
 
@@ -98,29 +96,46 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 				this);
 		protocolStack = new ProtocolStack(ClassConfigurator
 				.getProtocolClasses());
-		protocolManagers = CollectionFacade.getConcurrentHashMap();
+		protocolsToManagers = CollectionFacade.getConcurrentHashMap();
+		headersToManagers = CollectionFacade.getConcurrentHashMap();
 		
 		ProtocolManager manager = null;
+		Class<?>[] headers = null;
 		try {
 			for (Protocol protocol : protocolStack.getProtocols()) {
 				
-				// The protocol may not need a corresponding protocl manager
-				if (protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolManager.class) == null){
+				// The protocol may not need a corresponding protocol manager
+				if (protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolBinder.class) == null){
 					if (logger.isDebugEnabled()) {
 						logger.debug("Protocol " + protocol.getClass() + " does not have a dedicated manager");
 					}
 					continue;
 				}
 				
-				manager = (ProtocolManager) protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolManager.class).managerClass().newInstance();
+				manager = (ProtocolManager) protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolBinder.class).managerClass().newInstance();
 				manager.initializeProtoclManager(this);
-				protocolManagers.put(protocol.getClass(), manager);
+				protocolsToManagers.put(protocol.getClass(), manager);
+				
 				if (logger.isDebugEnabled()) {
 					logger.debug("Aassociating protocol " + protocol.getClass() + " with protocol manager " + manager.getClass());
 				}
+				
+				// Initialize headers and protocol managers
+				headers = protocol.getClass().getAnnotation(org.ssor.annotation.ProtocolBinder.class).headers();
+				for (Class<?> header : headers) {
+					
+					if (headersToManagers.containsKey(header)) {
+						throw new ConfigurationException("Header "  + header + " can not be associated with two protocols");
+					}
+					
+					headersToManagers.put(header, manager);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Aassociating header " + header + " with protocol manager " + manager.getClass());
+					}
+				}				
 			}
 		} catch (InstantiationException e) {
-			logger.error("Binding protocol and its manager failed", e);;
+			logger.error("Binding protocol and its manager failed", e);
 		} catch (IllegalAccessException e) {
 			logger.error("Binding protocol and its manager failed", e);
 		}
@@ -215,7 +230,7 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 	}
 
 	public ProtocolManager getManager (Class<?> clazz){
-		return protocolManagers.get(clazz);
+		return protocolsToManagers.get(clazz);
 	}
 
 	/**
@@ -223,13 +238,21 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 	 * @return the set of protocol managers
 	 */
 	public Set<ProtocolManager> getManagers () {
-		Iterator<Map.Entry<Class<?>, ProtocolManager>> itr = protocolManagers.entrySet().iterator();		
+		Iterator<Map.Entry<Class<?>, ProtocolManager>> itr = protocolsToManagers.entrySet().iterator();		
 		Set<ProtocolManager> set = new HashSet<ProtocolManager>();
 		while (itr.hasNext()) {
 			set.add(itr.next().getValue());
 		}
 		
 		return set;
+	}
+	
+	/**
+	 * Return a read-only set of all registered header classes and managers mapping, this is thread-safe
+	 * @return the set of header classes and managers mapping
+	 */
+	public Map<Class<?>, ProtocolManager> getHeadersToManagers() {
+        return headersToManagers;
 	}
 	
 	public String toString() {

@@ -10,7 +10,7 @@ import java.util.Queue;
 import org.ssor.util.Group;
 
 /**
- * This class manages all nodes, in order to maintain  a global view of region distribution
+ * This class manages all nodes, in order to maintain a global view of region distribution
  * 
  * @author Tao Chen
  * 

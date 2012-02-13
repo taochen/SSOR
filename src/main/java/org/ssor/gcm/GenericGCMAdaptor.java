@@ -17,7 +17,6 @@ import org.ssor.invocation.InvocationCallback;
 import org.ssor.protocol.Message;
 import org.ssor.protocol.ProtocolManager;
 import org.ssor.protocol.election.ElectionManager;
-import org.ssor.protocol.replication.ReplicationManager;
 import org.ssor.protocol.replication.RequestHeader;
 import org.ssor.protocol.tolerance.FTManager;
 import org.ssor.util.Callback;
@@ -37,8 +36,6 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 			.getLogger(GenericGCMAdaptor.class);
 	protected ElectionManager electionManager;
 
-	protected ReplicationManager replicationManager;
-
 	protected FTManager faultyManager;
 
 	protected RegionDistributionManager regionDistributionManager;
@@ -53,11 +50,14 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	
 	protected RegionDistributionSynchronyManager regionDistributionSynchronyManager;
 	
-	protected Set<ProtocolManager> protocolManager;
+	protected Map<Class<?>, ProtocolManager> headersToManagers;
+	
+	protected Set<Class<?>> headersSet;
 
 	public GenericGCMAdaptor(String groupName) {
 		this.group = new Group(groupName, this);
-		protocolManager = group.getManagers();
+		headersToManagers = group.getHeadersToManagers();
+		headersSet = headersToManagers.keySet();
 		faultyManager = (FTManager) group.getManager(org.ssor.protocol.tolerance.FT.class);
 		electionManager = (ElectionManager) group.getManager(org.ssor.protocol.election.REP.class);
 		regionDistributionManager = group.getRegionDistributionManager();
@@ -73,12 +73,15 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 		//System.out.print(address.hashCode() + " : " + Environment.UUID_ADDR + "************\n");
 		try {
 			
-			for (ProtocolManager manager : protocolManager) {
+			for (Class<?> key : headersSet) {
 				// A certain header can be handled by one manager only
 				// if multiple protocol needs to involved in the same header
 				// then it would be better to consider within the protocol (with the right command)
 				// rather than the protocol manager.
-				if (manager.handleReceive(message, address, addressUUID)) {
+				// 
+				// This ensure a header would never be handled by two different protocol incorrectly
+				if (key.isInstance(message.getHeader())) {
+					headersToManagers.get(key).handleReceive(message, address, addressUUID);
 					return;
 				}
 			}

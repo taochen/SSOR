@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.ssor.CollectionFacade;
 import org.ssor.Node;
 import org.ssor.Region;
-import org.ssor.annotation.ProtocolManager;
+import org.ssor.annotation.ProtocolBinder;
 import org.ssor.gcm.CommunicationAdaptor;
 import org.ssor.listener.CommunicationListener;
 import org.ssor.protocol.Command;
@@ -25,7 +25,8 @@ import org.ssor.util.Tuple;
  * 
  */
 
-@ProtocolManager(managerClass=org.ssor.protocol.election.ElectionManager.class)
+@ProtocolBinder(managerClass=org.ssor.protocol.election.ElectionManager.class, 
+		headers = {org.ssor.protocol.election.InterestHeader.class, org.ssor.protocol.election.DecisionHeader.class, org.ssor.protocol.election.AgreementHeader.class})
 public class REP extends RequirementsAwareProtocol implements CommunicationListener{
 
 	private static final Logger logger = LoggerFactory
