@@ -52,12 +52,10 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	
 	protected Map<Class<?>, ProtocolManager> headersToManagers;
 	
-	protected Set<Class<?>> headersSet;
 
 	public GenericGCMAdaptor(String groupName) {
 		this.group = new Group(groupName, this);
 		headersToManagers = group.getHeadersToManagers();
-		headersSet = headersToManagers.keySet();
 		faultyManager = (FTManager) group.getManager(org.ssor.protocol.tolerance.FT.class);
 		electionManager = (ElectionManager) group.getManager(org.ssor.protocol.election.REP.class);
 		regionDistributionManager = group.getRegionDistributionManager();
@@ -68,23 +66,20 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	public void receive(Message message, Object address) {
 
 	
-		int addressUUID = util.getUUIDFromAddress(address);
+		final int addressUUID = util.getUUIDFromAddress(address);
 		message.setSrc(address);
 		//System.out.print(address.hashCode() + " : " + Environment.UUID_ADDR + "************\n");
-		try {
+		try {	
+		
+			// A certain header can be handled by one manager only
+			// if multiple protocol needs to involved in the same header
+			// then it would be better to consider within the protocol (with the right command)
+			// rather than the protocol manager.
+			// 
+			// This ensure a header would never be handled by two different protocol incorrectly			
+			headersToManagers.get(message.getHeader().getClass()).handleReceive(message, address, addressUUID);
+				
 			
-			for (Class<?> key : headersSet) {
-				// A certain header can be handled by one manager only
-				// if multiple protocol needs to involved in the same header
-				// then it would be better to consider within the protocol (with the right command)
-				// rather than the protocol manager.
-				// 
-				// This ensure a header would never be handled by two different protocol incorrectly
-				if (key.isInstance(message.getHeader())) {
-					headersToManagers.get(key).handleReceive(message, address, addressUUID);
-					return;
-				}
-			}
 			/*
 			if(replicationManager.handleReceive(message, address, addressUUID)) return;
 			else if(electionManager.handleReceive(message, address, addressUUID)) return;
