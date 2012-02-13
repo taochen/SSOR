@@ -10,7 +10,6 @@ import org.ssor.protocol.AbstractProtocolManager;
 import org.ssor.protocol.Command;
 import org.ssor.protocol.Header;
 import org.ssor.protocol.Message;
-import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
 import org.ssor.util.Triple;
 import org.ssor.util.Tuple;
@@ -19,9 +18,6 @@ public class FTManager extends AbstractProtocolManager {
 
 	private static final Logger logger = LoggerFactory
 	.getLogger(FTManager.class);
-	
-	private ProtocolStack protocolStack;
-
 	
 	public boolean handleReceive(Message message, Object address, int addressUUID){
 		Header header = message.getHeader();

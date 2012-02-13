@@ -8,7 +8,6 @@ import org.ssor.protocol.AbstractProtocolManager;
 import org.ssor.protocol.Command;
 import org.ssor.protocol.Header;
 import org.ssor.protocol.Message;
-import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
 
 public class ElectionManager extends AbstractProtocolManager {
@@ -16,7 +15,6 @@ public class ElectionManager extends AbstractProtocolManager {
 	private static final Logger logger = LoggerFactory
 			.getLogger(ElectionManager.class);
 
-	private ProtocolStack protocolStack;
 	
 	public boolean handleReceive(Message message, Object address, int addressUUID){
 		Header header = message.getHeader();
@@ -61,11 +59,7 @@ public class ElectionManager extends AbstractProtocolManager {
 		try {
 			return protocolStack.down(Command.ELECTION_FIRST_BROADCAST, new Token(view));
 		} catch (RuntimeException e) {
-			if (logger.isErrorEnabled())
-				logger
-						.error("The channel is not connected, will try again in 2 sec");
-		
-
+			logger.error("The channel is not connected, will try again in 2 sec", e);
 			return join(view);
 		}
 	}

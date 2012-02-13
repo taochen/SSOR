@@ -9,7 +9,6 @@ import org.ssor.protocol.AbstractProtocolManager;
 import org.ssor.protocol.Command;
 import org.ssor.protocol.Header;
 import org.ssor.protocol.Message;
-import org.ssor.protocol.ProtocolStack;
 import org.ssor.protocol.Token;
 import org.ssor.protocol.replication.abcast.DeliveryPacket;
 import org.ssor.util.Callback;
@@ -18,8 +17,6 @@ public class ReplicationManager extends AbstractProtocolManager {
 
 	private static final Logger logger = LoggerFactory
 	.getLogger(ReplicationManager.class);
-	
-	private ProtocolStack protocolStack;
 	
 	public boolean handleReceive(Message message, Object address, int addressUUID){
 		
