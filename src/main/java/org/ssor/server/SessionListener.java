@@ -34,7 +34,6 @@ public class SessionListener implements ServletContextListener,
 	public void sessionCreated(HttpSessionEvent event) {
 		sessions.put(event.getSession().getId(), new FakeSession(event
 				.getSession()));
-
 	}
 
 	@Override
