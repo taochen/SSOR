@@ -11,7 +11,6 @@ import javax.servlet.http.HttpSessionAttributeListener;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.ServletRequestEvent;
@@ -29,17 +28,8 @@ public class SessionListener implements ServletContextListener,
 	private final static Map<String, HttpSession> sessions = CollectionFacade
 			.getConcurrentHashMap();
 
-	ServletContext sc;
-
-	public static HttpSession getSession(String id) {
-		FakeSession session = (FakeSession)sessions.get(id);
-		if (session == null)
-			sessions.put(id, session = new FakeSession(null));
-		else
-			session.resetActivation();
-		return session;
-	}
-
+    private boolean isAllowSelfManagedSeesion = false;
+	
 	@Override
 	public void sessionCreated(HttpSessionEvent event) {
 		sessions.put(event.getSession().getId(), new FakeSession(event
@@ -87,18 +77,20 @@ public class SessionListener implements ServletContextListener,
 		else
 			timeout = Integer.parseInt(timeoutString) * 6000;
 		// The quartz timer
-		new Timer().schedule(new TimerTask() {
-
-			public void run() {
-
-				final Set<Map.Entry<String, HttpSession>> set = sessions.entrySet();
-				for(Map.Entry<String, HttpSession> entry : set){
-					if(((FakeSession)entry.getValue()).isCanDeleted(timeout))
-						sessions.remove(entry.getKey());
+		if (isAllowSelfManagedSeesion) {
+			new Timer().schedule(new TimerTask() {
+	
+				public void run() {
+	
+					final Set<Map.Entry<String, HttpSession>> set = sessions.entrySet();
+					for(Map.Entry<String, HttpSession> entry : set){
+						if(((FakeSession)entry.getValue()).isCanDeleted(timeout))
+							sessions.remove(entry.getKey());
+					}
 				}
-			}
-
-		}, 10, timeout - 6000);
+	
+			}, 10, timeout - 6000);
+		}
 	}
 
 	@Override
