@@ -305,6 +305,24 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 		}
 	}
 
+	/**
+	 * If suspending requests exist, then use it even there is smaller value
+	 * obtained through
+	 * state transfer, since the sequence after the given state may never
+	 * arrive due to state is transfered before any
+	 * VS constraints.
+	 * This is because the entire delivery process is not managed by GCM
+	 * therefore it is possible that msg deliveried but enter the cacheMsgOnView
+	 * after the view. It is a pure implementation issue.
+	 * A potential solution for this is thread priority.
+	 * 
+	 * Since state has been guaranteed to be consistent with view delivery thus
+	 * this is no longer needed
+	 * @param serviceName
+	 * @param sessionId
+	 * @param sequence
+	 */
+	@Deprecated
 	public void setState(String serviceName, String sessionId, Sequence sequence) {
 
 		State state = null;
@@ -318,16 +336,7 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 				+ serviceManager.get(serviceName).getRegionNumber() + "\n");
 		if (state == null)
 			return;
-
-		// If suspending requests exist, then use it even there is smaller value
-		// obtained through
-		// state transfer, since the sequence after the given state may never
-		// arrive due to state is transfered before any
-		// VS constraints.
-		// This is because the entire delivery process is not managed by GCM
-		// therefore it is possible that msg deliveried but enter the cacheMsgOnView
-		// after the view. It is a pure implementation issue.
-		// A potential solution for this is thread priority.
+		
 		if (state.isFromStateTransfer())
 			state.setSequence(sequence);
 		else {

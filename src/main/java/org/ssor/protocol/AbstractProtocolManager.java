@@ -66,12 +66,10 @@ public abstract class AbstractProtocolManager implements ProtocolManager{
 				}
 			}
 
-			setStateFromMessage(message);
 			group.isFinishSuspendMsgsProcess();
 			local.remove();
 			
 		} else if(local.get() != null) {
-			setStateFromMessage(message);
 			group.isFinishSuspendMsgsProcess();
 			local.remove();
 		}
@@ -80,6 +78,8 @@ public abstract class AbstractProtocolManager implements ProtocolManager{
 
 	}
 	
+	@SuppressWarnings("unused")
+	@Deprecated
 	private void setStateFromMessage(Message message){
 		/*
 		 * For catching the latest state
