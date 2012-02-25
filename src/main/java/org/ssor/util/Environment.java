@@ -24,6 +24,8 @@ public class Environment {
 	
 	public static final ThreadLocal<Boolean> isNew = new ThreadLocal<Boolean> ();
 	
+	public static final ThreadLocal<Boolean> isDeliverySuspended = new ThreadLocal<Boolean> ();
+	
 	public static Group getGroup(String group){
 		return globalContext.get(group);
 	}

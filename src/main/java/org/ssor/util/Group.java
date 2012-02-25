@@ -324,6 +324,10 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 		// state transfer, since the sequence after the given state may never
 		// arrive due to state is transfered before any
 		// VS constraints.
+		// This is because the entire delivery process is not managed by GCM
+		// therefore it is possible that msg deliveried but enter the cacheMsgOnView
+		// after the view. It is a pure implementation issue.
+		// A potential solution for this is thread priority.
 		if (state.isFromStateTransfer())
 			state.setSequence(sequence);
 		else {
@@ -373,6 +377,11 @@ public class Group implements ManagerBus, RequirementsAwareAdaptor,
 
 		states.clear();
 		sessionalStates.clear();
+	}
+
+	@Override
+	public Group getGroup() {
+		return this;
 	}
 
 }

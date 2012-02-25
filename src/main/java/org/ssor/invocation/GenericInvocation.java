@@ -16,6 +16,8 @@ import org.ssor.protocol.Message;
 import org.ssor.protocol.replication.ReplicationManager;
 import org.ssor.protocol.replication.RequestHeader;
 import org.ssor.protocol.replication.ResponsePacket;
+import org.ssor.util.CommonExecutor;
+import org.ssor.util.Group;
 
 /**
  * 
@@ -31,7 +33,7 @@ public abstract class GenericInvocation implements InvocationAdaptor {
 	
 	protected ServiceManager serviceManager;
 	protected ReplicationManager replicationManager;
-
+    protected Group group;
 	protected InvocationCallback callback;
 	
 	public GenericInvocation(){
@@ -39,6 +41,7 @@ public abstract class GenericInvocation implements InvocationAdaptor {
 	}
 
 	public GenericInvocation(ManagerBus bus, RequirementsAwareAdaptor awareness) {
+		group = awareness.getGroup();
 		serviceManager = awareness.getServiceManager();
 		replicationManager = (ReplicationManager) bus.getManager(org.ssor.protocol.replication.AR.class);
 	}
@@ -216,6 +219,8 @@ public abstract class GenericInvocation implements InvocationAdaptor {
 			result = replicationManager.executeInAdvance(message);
 
 		}
+		
+		CommonExecutor.releaseForReceiveInAnotherThread(null, group, null);	
 
 		Object packet = null;
 		if ((packet = postService(service, result)) != null) {

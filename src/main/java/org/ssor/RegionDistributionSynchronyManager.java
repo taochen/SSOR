@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ssor.protocol.Message;
 import org.ssor.util.Callback;
+import org.ssor.util.Environment;
 import org.ssor.util.Group;
 
 /**
@@ -365,7 +366,7 @@ public class RegionDistributionSynchronyManager {
 	public void releaseOnRetransmission(Integer viewId, Integer nodeId) {
 
 		if (nodeId != null) {
-			Set set = map.get(viewId);
+			Set<Integer> set = map.get(viewId);
 			set.remove(nodeId);
 			if (set.size() == 0) {
 
@@ -637,6 +638,10 @@ public class RegionDistributionSynchronyManager {
 	 * delivery complete, this ensure serilizability (VS7).
 	 */
 	public void releaseMsgOnView(Message msg) {
+		if (Environment.isDeliverySuspended.get() != null) {
+			Environment.isDeliverySuspended.remove();
+			return;
+		}
 		synchronized (msgMutualLock) {
 			//System.out.print(msg + " release\n");
 			if (onProcessedNo > 0) {
@@ -653,7 +658,7 @@ public class RegionDistributionSynchronyManager {
 	 * Ensure VS6 and VS7 of the view delivery, which means the current thread
 	 * may be suspended for ensuring serilizability property.
 	 */
-	public void isViewDeliverable() {
+	public void isViewDeliverable() {System.out.print("no: " + onProcessedNo + "\n");
 		synchronized (msgMutualLock) {
 
 			while (onProcessedNo != 0) {

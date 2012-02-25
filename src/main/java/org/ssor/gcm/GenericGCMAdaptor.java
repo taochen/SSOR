@@ -361,7 +361,7 @@ public abstract class GenericGCMAdaptor implements GCMAdaptor {
 	
 	private void processReceive(final Message message, final Object src){
 		if(regionDistributionSynchronyManager.cacheMsgOnView(util.getUUIDFromAddress(src), message, message.getViewSeqno())){
-			
+			Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
 			//if(message.getHeader() instanceof RequestHeader && message.getHeader().getOuter() instanceof ResponseHeader)
 				//System.out.print("finish reqid: " + message.getReqId()+ "process: " +  ((ResponseHeader)message.getHeader().getOuter()).getTimestamp() + "\n");
 			

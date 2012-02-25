@@ -1,8 +1,9 @@
 package org.ssor.gcm;
 
+import org.ssor.Adaptor;
 import org.ssor.protocol.Message;
 
-public interface CommunicationAdaptor {
+public interface CommunicationAdaptor extends Adaptor{
 
 	/**
 	 * This normally implemented in GCM aware manner

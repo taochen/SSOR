@@ -15,6 +15,8 @@ import org.ssor.protocol.Message;
 import org.ssor.protocol.RequirementsAwareProtocol;
 import org.ssor.protocol.Token;
 import org.ssor.util.Callback;
+import org.ssor.util.CommonExecutor;
+import org.ssor.util.Environment;
 import org.ssor.util.Tuple;
 
 /**
@@ -185,12 +187,15 @@ public class REP extends RequirementsAwareProtocol implements CommunicationListe
 								logger.trace("Receive join request and reply to new join node");
 							}
 
+							CommonExecutor.releaseForReceiveInAnotherThread(null, adaptor.getGroup(), null);	
+							
 							return stack.down(Command.ELECTION_UNICAST, new Token(new ElectionUnit(
 									message.getSrc(), Token.ELECTION_JOIN_INTERSTS_ONLY == token.getNextAction()? null : (Decision[]) token.getDataForNextProtocol())));
 
 						}
 
 					})){
+				Environment.isDeliverySuspended.set(true);
 				value.setNextAction(Token.ELECTION_JOIN_DISCARD);
 			    return doUp(command, value);
 			}

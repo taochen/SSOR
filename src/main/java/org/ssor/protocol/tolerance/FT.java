@@ -782,8 +782,9 @@ public class FT extends RequirementsAwareProtocol implements
 				}
 
 				// ViewSynchronizationManager.releaseOnCrashWhenNormalNode(tuple.getVal1().getUUID_ADDR());
-				return down(Command.FT_FINAL_BROADCAST, new Token(node
+				down(Command.FT_FINAL_BROADCAST, new Token(node
 						.getUUID_ADDR()));
+				return doUp(command, value);
 			}
 			// Maintain view order, extends to protocol scope
 			regionDistributionSynchronyManager.suspend(node.getUUID_ADDR());
@@ -1258,7 +1259,7 @@ public class FT extends RequirementsAwareProtocol implements
 
 		public void run() {
 
-			final Token token = up(command, value);
+			final Token token = up(command, value);;
 			// Trigger Broadcast
 			// this phase can be skipped, since how the region and new sequencer
 			// are allocated is deterministic across all nodes.

@@ -28,6 +28,8 @@ import org.ssor.protocol.replication.ReplicationUnit;
 import org.ssor.protocol.replication.RequestHeader;
 import org.ssor.protocol.replication.ResponseHeader;
 import org.ssor.protocol.replication.ResponsePacket;
+import org.ssor.util.Callback;
+import org.ssor.util.CommonExecutor;
 import org.ssor.util.Environment;
 import org.ssor.util.Tuple;
 
@@ -663,6 +665,7 @@ public class MSP extends RequirementsAwareProtocol implements CommunicationListe
 
 				synchronized (data) {
 					data.setIsExecutable(true);
+					Environment.isDeliverySuspended.set(true);
 					data.notifyAll();
 				}
 
@@ -868,8 +871,8 @@ public class MSP extends RequirementsAwareProtocol implements CommunicationListe
 
 					// This means it is a new thread already, and only for
 					// execution on replica sites
-					if (marker.get() == null && packet.getIHeader() == null) {
-
+					if (marker.get() == null && packet.getIHeader() == null) {					
+						Environment.isDeliverySuspended.set(true);
 						pool.execute(new Runnable() {
 
 							@Override
@@ -878,7 +881,14 @@ public class MSP extends RequirementsAwareProtocol implements CommunicationListe
 								// System.out.print(packet.getSequence() + " Run
 								// new!!!!***** \n");
 								marker.set(true);
-								doAtomicDelivery(token.clone(packet.clone(), token.getData()), sessionId);
+								CommonExecutor.releaseForReceiveInAnotherThread(new Callback(){
+
+									@Override
+									public Object run() {
+										return doAtomicDelivery(token.clone(packet.clone(), token.getData()), sessionId);
+									}
+									
+								}, adaptor.getGroup(), null);				
 								marker.set(null);
 							}
 

@@ -1,7 +1,7 @@
 package org.ssor;
 
 
-public interface RequirementsAwareAdaptor {
+public interface RequirementsAwareAdaptor extends Adaptor{
 
 	
 	public ServiceManager getServiceManager();

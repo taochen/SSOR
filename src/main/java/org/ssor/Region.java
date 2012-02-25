@@ -186,8 +186,8 @@ public class Region {
 		else
 			result = 1;
 
-		if(result == 1 && region ==3)
-		System.out.print("Region: " + this + "Result: " + result + ", " +
+		if(result != 1)
+		System.out.print("Region: " + region + "Result: " + result + ", " +
 		 sequence + ", except: " + expectedSeqno + ", concurrent: " +
 		 expectedConcurrentno+ "\n");
 
@@ -285,7 +285,7 @@ lastServiceName = service.name;
 			}
 
 		}
-		 if(region==3)
+		 if(region==1)
 		System.out.print("seqno: " + nextTimestamp + "\n");
 		// last may be null
 		return isPass ? new Sequence(region, nextTimestamp, last == 0 ? null
