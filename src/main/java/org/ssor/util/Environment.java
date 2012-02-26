@@ -15,7 +15,8 @@ import org.ssor.CollectionFacade;
 public class Environment {
 
 	
-	// Indicate if it is allow to use FIFO communication
+	// Indicate if it is allow to use session level FIFO communication (used by GCM)
+	// to determine on different sessions.
 	public static boolean ENABLE_CHANGE_FIFO = false;
 
 	private static final Map<String, Group> globalContext = CollectionFacade.getConcurrentHashMap();
@@ -23,7 +24,9 @@ public class Environment {
 	public static final  ExecutorService pool = Executors.newCachedThreadPool();
 	
 	public static final ThreadLocal<Boolean> isNew = new ThreadLocal<Boolean> ();
-	
+	// This is used to determine if the current service delivery has been transfered
+	// to another thread, (used in releaseMsgOnView) as GCM can not tolerance suspend
+	// of a delivery process.
 	public static final ThreadLocal<Boolean> isDeliverySuspended = new ThreadLocal<Boolean> ();
 	
 	public static Group getGroup(String group){
