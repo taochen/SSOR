@@ -118,19 +118,18 @@ public class SessionRegion extends Region {
 		synchronized (sessionRegion.assignLock) {
 			if (isSequencer(UUID_ADDR)) {
 				// If the previous one does not need relax treatment
-				if (!service
-						.isConcurrentDeliverable(sessionRegion.lastServiceName)) {
+				if (!sessionRegion.isConcurrentDeliverable(service)) {
 					sessionRegion.seqno++;
 					//sessionRegion.lastServiceName = service.name;
 					last = sessionRegion.concurrentno;
 					sessionRegion.concurrentno = 0;
-
+					sessionRegion.lastServices.clear();
 				} else {
 					last = -1;
 					sessionRegion.concurrentno++;
 				}
-sessionRegion.lastServiceName = service.name;
 				nextTimestamp = sessionRegion.seqno;
+				sessionRegion.lastServices.add(service.name);
 
 			} else
 				isPass = false;

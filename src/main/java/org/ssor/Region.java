@@ -1,8 +1,11 @@
 package org.ssor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +52,10 @@ public class Region {
 	// Maintain mutual exclusion while assigning sequence
 	protected Object assignLock = new Byte[0];
 
-	protected String lastServiceName = "";
+	// Use hash set here since it only need to add 1 entry,
+	// iteration and remove all entries, no duplicate entry needed
+	protected Set<String> lastServices = new HashSet<String>();
+	//protected String lastServiceName = "";
 
 	protected int concurrentno = 0;
 
@@ -68,7 +74,6 @@ public class Region {
 	protected Sequence latestSequence;
 
 	// The view during decentralized consensus
-	@SuppressWarnings("unchecked")
 	protected Queue<Integer> consensusView;
 	protected volatile boolean isAllowRequest = true;
 
@@ -87,18 +92,20 @@ public class Region {
 
 	public Region(int region, int scope) {
 		super();
-		if (region == SessionRegion.SESSION_REGION)
+		if (region == SessionRegion.SESSION_REGION) {
 			throw new ConfigurationException(
 					"The region number -1 is used for session level consistency service");
+		}
 		this.region = region;
 		this.scope = scope;
 	}
 
 	public Region(int region, int scope, int sequencer) {
 		super();
-		if (region == SessionRegion.SESSION_REGION)
+		if (region == SessionRegion.SESSION_REGION) {
 			throw new ConfigurationException(
 					"The region number -1 is used for session level consistency service");
+		}
 
 		this.region = region;
 		this.scope = scope;
@@ -179,6 +186,9 @@ public class Region {
 		else if (sequence.getConcurrentno() != null
 				&& expectedConcurrentno == sequence.getConcurrentno()
 				&& expectedSeqno == sequence.getSeqno()) {
+			// We can put the reset of expectedConcurrentno here
+			// since there is not two sequences with the same seqno
+			// and concurrentno is not null
 			expectedConcurrentno = 0;
 			result = 0;
 		} else if (expectedSeqno > sequence.getSeqno())
@@ -187,9 +197,9 @@ public class Region {
 			result = 1;
 
 		if(result != 1)
-		System.out.print("Region: " + region + "Result: " + result + ", " +
+		System.out.print("Region: " + region + " Result: " + result + ", " +
 		 sequence + ", except: " + expectedSeqno + ", concurrent: " +
-		 expectedConcurrentno+ "\n");
+		 expectedConcurrentno+ " service " + service.name + "\n");
 
 		result = faultTolerance(sessionId, sequence, service, result, this);
 
@@ -256,20 +266,24 @@ public class Region {
 			synchronized (assignLock) {
 				if (isSequencer(UUID_ADDR)) {
 
-					// If the previous one does not need concurrent treatment
-					if (!service.isConcurrentDeliverable(lastServiceName)) {
+					// If the previous ones do not need concurrent treatment
+					if (!isConcurrentDeliverable(service)) {
 						seqno++;
 						//lastServiceName = service.name;
 						last = concurrentno;
 						concurrentno = 0;
 						// System.out.print(last + "end concurrent
 						// *********\n");
+						// Clear the CDS set
+						lastServices.clear();
 					} else {
 						last = -1;
 						concurrentno++;
 					}
 					nextTimestamp = seqno;
-lastServiceName = service.name;
+					// Add the service into CDS set
+					lastServices.add(service.name);
+                    // lastServiceName = service.name;
 					// System.out.print("Sequencer: " + sequencer + " Service: "
 					// + service.name + " New sequence: " + new Sequence(region,
 					// nextTimestamp, last == 0 ? null : last)+ "\n" );
@@ -574,8 +588,8 @@ lastServiceName = service.name;
 				else
 					concurrentno = latestSequence.getConcurrentno() - 1;
 			}
-
-			lastServiceName = "";
+			lastServices.clear();
+			//lastServiceName = "";
 		}
 		// System.out.print("region: " + region + "last: "
 		// + (latestSequence.getSeqno() - 1) + "seqno: " + seqno + "\n");
@@ -765,4 +779,24 @@ lastServiceName = service.name;
 				+ expectedConcurrentno + ")";
 	}
 
+	/**
+	 * This function should only be used in a thread safe and synchronized (via assignLock) manner.
+	 * @param service the given service
+	 * @return true if allow concurrent delivery, false otherwise
+	 */
+	protected boolean isConcurrentDeliverable (AtomicService service) {
+		if(lastServices.isEmpty()) {
+			return false;
+		}
+		
+		final Iterator<String> itr = lastServices.iterator();
+		while (itr.hasNext()) {
+			if(!service.isConcurrentDeliverable(itr.next())) {
+				// Return false even if only one of the service in the set
+				// can not be delivered concurrently with the given service.
+				return false;
+			}
+		}
+		return true;
+	}
 }
