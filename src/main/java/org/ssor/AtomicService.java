@@ -1,8 +1,13 @@
 package org.ssor;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +38,8 @@ public class AtomicService {
 	// By default this is the same as service name
 	protected String proxyAlias;
 
-	protected List<String> concurrentDeliverableServiceNames;
+	protected Map<AtomicService, Consistency> interferedServices;
+	protected Set<AtomicService> dependentServices; 
 
 	// protected boolean isConcurrentDeliverable = false;
 
@@ -408,10 +414,20 @@ public class AtomicService {
 	 * @param service
 	 *            the target service.
 	 */
-	public void addConcurrentDeliverableService(AtomicService service) {
-		if (concurrentDeliverableServiceNames == null)
-			concurrentDeliverableServiceNames = new LinkedList<String>();
-		concurrentDeliverableServiceNames.add(service.name);
+	public void addInterferedService(AtomicService service) {
+	}
+	
+	public void addInterferedService(AtomicService service, int tolerance) {
+		if (interferedServices == null)
+			interferedServices = new HashMap<AtomicService, Consistency>();
+		interferedServices.put(service, new Consistency(tolerance));
+	}
+	
+	public void addDependantService(AtomicService service) {
+		if (dependentServices == null) {
+			dependentServices = new HashSet<AtomicService>();
+		}
+		dependentServices.add(service);
 	}
 
 	/**
@@ -422,9 +438,54 @@ public class AtomicService {
 	 * @return true if yes, false otherwise.
 	 */
 	public boolean isConcurrentDeliverable(String lastServiceName) {
-		if (concurrentDeliverableServiceNames == null)
-			return false;
-		return concurrentDeliverableServiceNames.contains(lastServiceName);
+		boolean cd = true;
+		if (interferedServices == null && dependentServices == null) {
+			return cd;
+		}
+		
+		if (interferedServices != null) {
+			// Update interfered services, determine if order needed
+			Iterator<Request> itr = null;
+			Request request = null;
+			for (Map.Entry<AtomicService, Consistency> e : interferedServices.entrySet()) {
+				itr = e.getValue().requests.iterator();
+				while(itr.hasNext()){
+					request = itr.next();
+					if (request.count == e.getValue().tolerance){
+						cd = false;
+						itr.remove();
+						break;
+					} else {
+						request.increase();
+					}
+				}			
+			}
+		}
+		if (dependentServices != null) {
+			  // Update services which interfered by this
+			  for (AtomicService service : dependentServices) {
+				  service.updateDependentService(this);
+			  }
+		}
+		return cd;
+	}
+	
+	public void updateDependentService(AtomicService service) {
+		for (Map.Entry<AtomicService, Consistency> e : interferedServices.entrySet()) {
+			if (e.getKey().name.equals(service.name)) {
+				e.getValue().addRequest();
+				break;
+			}
+		}
+	}
+	
+	public void updateTolerance(AtomicService service, int tolerance) {
+		for (Map.Entry<AtomicService, Consistency> e : interferedServices.entrySet()) {
+			if (e.getKey().name.equals(service.name)) {
+				e.getValue().setTolerance(tolerance);
+				break;
+			}
+		}
 	}
 
 	public void setFIFO(boolean isFIFO) {
@@ -464,4 +525,28 @@ public class AtomicService {
 		return "(Service: " + name + ", with proxy alias: " + proxyAlias + ", region: " + region + ")";
 	}
 
+	private class Consistency {
+		private List<Request> requests;
+		// 0 means order one by one
+		private int tolerance;
+		public Consistency(int tolerance){
+			requests = new LinkedList<Request>();
+			this.tolerance = tolerance;
+		}
+		
+		public void addRequest(){
+			requests.add(new Request());
+		}
+		
+		public void setTolerance(int tolerance) {
+			this.tolerance = tolerance;
+		}
+	}
+	
+	private class Request {
+		private int count = 0;
+		public void increase(){
+			count++;
+		}
+	}
 }

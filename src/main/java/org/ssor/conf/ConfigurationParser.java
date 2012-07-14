@@ -189,7 +189,7 @@ public class ConfigurationParser {
 			
 			for (String name : entry.getValue()) {
 
-				atomicService.addConcurrentDeliverableService(acquireService(services, name, entry.getKey()));
+				atomicService.addInterferedService(acquireService(services, name, entry.getKey()));
 			}
 		}
 
